@@ -1,15 +1,23 @@
-// Records the demo walkthrough with on-screen captions.
-// Usage: npm i --no-save playwright && node scripts/record-demo.mjs [baseUrl] [outDir]
+// Records the demo walkthrough with on-screen captions, paced to narration clips.
+// Usage: npm i --no-save playwright
+//        node scripts/record-demo.mjs [baseUrl] [outDir] [narrationDir]
+// With a narrationDir (from make-narration.mjs) every step lasts at least as long as its clip, and
+// timeline.json records when each step started so mux-narration.mjs can place the audio.
 import { chromium } from "playwright";
-import { mkdirSync, readdirSync, renameSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const base = process.argv[2] ?? "https://mandate-blush.vercel.app";
 const out = path.resolve(process.argv[3] ?? "demo-video");
+const narrationDir = process.argv[4] ? path.resolve(process.argv[4]) : null;
 mkdirSync(out, { recursive: true });
 
+const lines = JSON.parse(readFileSync(new URL("./narration.json", import.meta.url), "utf8"));
+const byId = Object.fromEntries(lines.map((l) => [l.id, l]));
+const durations = narrationDir && existsSync(path.join(narrationDir, "durations.json")) ? JSON.parse(readFileSync(path.join(narrationDir, "durations.json"), "utf8")) : {};
+
 const browser = await chromium.launch();
-const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, recordVideo: { dir: out, size: { width: 1280, height: 720 } }, reducedMotion: "no-preference" });
+const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, recordVideo: { dir: out, size: { width: 1280, height: 720 } } });
 
 // Caption bar and a visible cursor dot, re-created after every full page load.
 await context.addInitScript(() => {
@@ -22,7 +30,6 @@ await context.addInitScript(() => {
     bar.style.opacity = bar.textContent ? "1" : "0";
     document.documentElement.appendChild(bar);
     const dot = document.createElement("div");
-    dot.id = "__dot";
     dot.style.cssText = "position:fixed;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:rgba(30,70,200,.35);border:2px solid rgba(30,70,200,.9);z-index:2147483647;pointer-events:none;left:-50px;top:-50px;transition:left .06s linear,top .06s linear";
     document.documentElement.appendChild(dot);
     addEventListener("mousemove", (e) => {
@@ -35,17 +42,30 @@ await context.addInitScript(() => {
 });
 
 const page = await context.newPage();
+const t0 = Date.now();
+const timeline = {};
 const wait = (ms) => page.waitForTimeout(ms);
-const caption = async (text) => {
+let current = null;
+
+/** Start a step: show its caption and remember when it began. */
+async function say(id) {
+  current = { id, at: Date.now() };
+  timeline[id] = (current.at - t0) / 1000;
   await page.evaluate((t) => {
     sessionStorage.setItem("__cap", t);
     const bar = document.getElementById("__cap");
     if (bar) {
       bar.textContent = t;
-      bar.style.opacity = t ? "1" : "0";
+      bar.style.opacity = "1";
     }
-  }, text);
-};
+  }, byId[id].caption);
+}
+/** End a step: keep the screen until its narration has finished (plus a short breath). */
+async function hold(minMs = 0) {
+  const need = Math.max(minMs, (durations[current.id] ?? 0) * 1000 + 700);
+  const left = need - (Date.now() - current.at);
+  if (left > 0) await wait(left);
+}
 const click = async (selector) => {
   const el = page.locator(selector).first();
   await el.scrollIntoViewIfNeeded();
@@ -54,78 +74,85 @@ const click = async (selector) => {
   await wait(350);
   await el.click();
 };
-const ask = async (text, ms) => {
+const ask = async (text) => {
   await page.locator('[data-testid="request-input"]').fill("");
   await page.locator('[data-testid="request-input"]').pressSequentially(text, { delay: 45 });
   await wait(300);
   await click('[data-testid="send-request"]');
-  await wait(ms);
 };
 
 await page.goto(base);
-await caption("AI agents can shop now. Handing one your card is the scary part.");
-await wait(5500);
-await caption("Mandate gives the agent a budget. The model proposes. Plain code decides.");
-await click('button:has-text("a bottle of single malt whisky")');
-await wait(6000);
+await say("intro");
+await hold(4500);
 
-await caption("A mandate is an envelope: limits, categories, expiry.");
+await say("hero");
+await click('button:has-text("a bottle of single malt whisky")');
+await hold(5000);
+
+await say("try");
 await click('[data-testid="try-demo"] >> nth=1');
 await page.waitForURL("**/desk");
-await wait(4500);
+await hold(3500);
 
-await caption("Inside the mandate: the agent asks for gel pens. Cleared.");
-await ask("a pack of gel pens", 4500);
-await caption("Cleared purchases go to PayPal Orders v2. (Simulated here; the real sandbox runs with your own keys.)");
+await say("pens");
+await ask("a pack of gel pens");
+await hold(4500);
+
+await say("pay");
 await click('[data-testid="pay-simulated"]');
-await wait(5500);
+await hold(5000);
 
-await caption("Above the ask-me-first threshold, the purchase is held for the owner.");
-await ask("a desk lamp under $40", 5000);
+await say("lamp");
+await ask("a desk lamp under $40");
+await hold(4500);
+
+await say("approve");
 await click('[data-testid="approve"]');
-await wait(1500);
-await caption("Owner approves, then PayPal pays.");
+await wait(1200);
 await click('[data-testid="pay-simulated"]');
-await wait(5000);
+await hold(4000);
 
-await caption("Wrong category and over the limit: refused, with every rule and the numbers.");
-await ask("a bottle of single malt whisky", 7000);
+await say("whisky");
+await ask("a bottle of single malt whisky");
+await hold(6500);
 
-await caption("Want the real thing? Plug in your own PayPal sandbox keys. They stay in this tab only.");
+await say("sandbox");
 await click('[data-testid="sandbox-toggle"]');
-await wait(6500);
+await hold(5500);
 await click('[data-testid="sandbox-toggle"]');
-await wait(800);
+await wait(700);
 
-await caption("Every request, decision and PayPal order id lands in the ledger.");
+await say("ledger");
 await click('[data-testid="nav-ledger"]');
-await wait(7500);
+await hold(6000);
 
-await caption("Write a mandate in plain English and the form fills itself in.");
+await say("mandates");
 await click('[data-testid="nav-mandates"]');
-await wait(2000);
+await wait(1500);
 await click('[data-testid="new-mandate"]');
 await page.locator('[data-testid="describe-input"]').pressSequentially("Books and gifts for my sister, $40 a time, $100 a month, ask me above $20", { delay: 35 });
 await wait(400);
 await click('[data-testid="draft-button"]');
-await wait(4500);
+await wait(3500);
 await click('[data-testid="save-mandate"]');
-await wait(3000);
+await hold(4500);
 
-await caption("Revoke an envelope and the agent has no spending power. Instantly.");
+await say("revoke");
 await click('[data-testid="revoke-mnd_pantry"]');
 await wait(1200);
 await click('[data-testid="confirm-revoke"]');
-await wait(5500);
+await hold(5000);
 
-await caption("The server re-prices every cart and re-checks the mandate before any PayPal order.");
-await wait(5000);
-await caption("Mandate: give your AI agent a budget, not your card.");
+await say("security");
+await hold(5000);
+
 await page.goto(base);
-await wait(5000);
+await say("outro");
+await hold(4500);
 
 await context.close();
 await browser.close();
 const file = readdirSync(out).find((f) => f.endsWith(".webm"));
 if (file) renameSync(path.join(out, file), path.join(out, "mandate-demo.webm"));
+writeFileSync(path.join(out, "timeline.json"), JSON.stringify(timeline, null, 2));
 console.log("saved", path.join(out, "mandate-demo.webm"));

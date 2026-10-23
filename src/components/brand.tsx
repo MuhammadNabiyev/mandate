@@ -26,7 +26,7 @@ export function VerdictStamp({ decision, land = true, size = "md" }: { decision:
   return (
     <span className={`stamp ${text} ${land ? "stamp-land" : ""}`} data-tone={t.tone} data-testid="verdict-stamp" role="img" aria-label={`${t.word}: ${t.sub}`}>
       <span>{t.word}</span>
-      {size !== "sm" && <span className="text-[0.5em] font-semibold tracking-[0.18em] opacity-90">{t.sub}</span>}
+      {size !== "sm" && <span className="text-[0.7rem] font-semibold tracking-[0.12em] opacity-90">{t.sub}</span>}
     </span>
   );
 }

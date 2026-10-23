@@ -4,7 +4,7 @@
 
 Mandate sits between an AI shopping agent and PayPal. The model proposes a purchase; plain, tested code decides whether it is allowed; PayPal pays. Built for the PayPal AI Hackathon.
 
-Live demo: _add the Vercel URL here_ · No sign-up · PayPal **sandbox** only, no real money moves.
+Live demo: <https://mandate-blush.vercel.app> · No sign-up · PayPal **sandbox** only, no real money moves.
 
 ## The idea
 

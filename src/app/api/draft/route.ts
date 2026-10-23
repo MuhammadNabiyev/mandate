@@ -1,4 +1,5 @@
 import { aiConfigured, draftMandateOffline, draftMandateWithModel } from "@/lib/ai";
+import { allowAi, clientKey } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 
@@ -7,7 +8,7 @@ export async function POST(req: Request) {
   const description = typeof body?.description === "string" ? body.description.trim().slice(0, 500) : "";
   if (!description) return Response.json({ error: "Describe what the agent may buy." }, { status: 400 });
 
-  if (aiConfigured()) {
+  if (aiConfigured() && allowAi(clientKey(req))) {
     try {
       return Response.json({ draft: await draftMandateWithModel(description), source: "ai" });
     } catch {

@@ -1,6 +1,7 @@
 import { buildProposal, pickOffline } from "@/lib/agent";
 import { aiConfigured, pickWithModel } from "@/lib/ai";
 import { evaluate } from "@/lib/policy";
+import { allowAi, clientKey } from "@/lib/ratelimit";
 import { parseLedger, parseMandate } from "@/lib/validate";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,9 @@ export async function POST(req: Request) {
   let source: "ai" | "offline" = "offline";
   let chosen = pickOffline(request);
   let note: string | undefined;
-  if (aiConfigured()) {
+  if (aiConfigured() && !allowAi(clientKey(req))) {
+    note = "Busy: the AI model is rate limited for you right now, so the built-in matcher chose instead.";
+  } else if (aiConfigured()) {
     try {
       chosen = await pickWithModel(request);
       source = "ai";

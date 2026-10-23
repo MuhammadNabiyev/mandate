@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { draftMandateOffline, draftToMandate, sanitizeDraft } from "./ai";
 import { captureOrder, createOrder, credsFromRequest } from "./paypal";
+import { allowAi } from "./ratelimit";
 import { parseLedger, parseMandate, parseProposal } from "./validate";
 
 describe("draftMandateOffline", () => {
@@ -105,5 +106,15 @@ describe("bring-your-own sandbox keys", () => {
 
   it("refuses to capture a real order without credentials", async () => {
     await expect(captureOrder("5O190127TN364715T", null)).rejects.toThrow(/not configured/);
+  });
+});
+
+describe("AI rate limit", () => {
+  it("allows a burst, then falls back, then recovers after the window", () => {
+    const t = 1_000_000;
+    for (let i = 0; i < 40; i++) expect(allowAi("visitor-a", t)).toBe(true);
+    expect(allowAi("visitor-a", t)).toBe(false);
+    expect(allowAi("visitor-b", t)).toBe(true);
+    expect(allowAi("visitor-a", t + 11 * 60_000)).toBe(true);
   });
 });

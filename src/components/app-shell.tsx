@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useConfig } from "@/lib/config-client";
+import { useSandboxKeys } from "@/lib/paypal-keys";
 import { Logo } from "./brand";
 
 const NAV = [
@@ -14,6 +15,7 @@ const NAV = [
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
   const cfg = useConfig();
+  const mine = useSandboxKeys();
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="no-print sticky top-0 z-30 border-b border-ink/15 bg-paper/92 backdrop-blur-sm">
@@ -39,7 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
           <p className="hidden text-xs text-ink-soft md:block" data-testid="mode-readout">
-            {cfg === null ? "" : cfg.paypalClientId ? "PayPal sandbox connected" : "PayPal simulator"}
+            {cfg === null ? "" : mine || cfg.paypalClientId ? "PayPal sandbox connected" : "PayPal simulator"}
             {cfg === null ? "" : " · "}
             {cfg === null ? "" : cfg.ai ? "AI agent online" : "built-in matcher"}
           </p>

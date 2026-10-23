@@ -26,7 +26,7 @@ Agents that can buy things are arriving, and the scary part is handing one a car
 | AI model (Gemini or any OpenAI-compatible endpoint) | Chooses catalog items for a request; drafts a mandate from plain English |
 | Built-in matcher | Keeps everything working with no AI key |
 
-Without PayPal keys the app runs a clearly labelled local simulator for the same create + capture flow.
+Without PayPal keys the app runs a clearly labelled local simulator for the same create + capture flow. Anyone can also switch the deployed demo to **their own PayPal sandbox app**: open the Agent desk, choose "Use my own sandbox keys", and paste a sandbox Client ID and Secret. They stay in that browser tab (session storage), are sent only to PayPal's sandbox host through this app's API, and are never stored or logged.
 
 ## Security model
 

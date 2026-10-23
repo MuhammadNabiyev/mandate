@@ -9,8 +9,27 @@ const BASE = "https://api-m.sandbox.paypal.com";
 export const paypalConfigured = (): boolean => Boolean(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET);
 export const paypalClientId = (): string | null => (paypalConfigured() ? process.env.PAYPAL_CLIENT_ID! : null);
 
-async function accessToken(): Promise<string> {
-  const basic = Buffer.from(`${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`).toString("base64");
+export interface Creds {
+  clientId: string;
+  secret: string;
+}
+
+const KEY_SHAPE = /^[A-Za-z0-9_-]{20,200}$/;
+
+/**
+ * Whose sandbox to use. A visitor (a judge, say) can bring their own sandbox keys in two request
+ * headers; otherwise the server's environment keys apply; otherwise null means the simulator.
+ * Keys are only ever sent to PayPal's sandbox host, never stored and never logged.
+ */
+export function credsFromRequest(req: Request): Creds | null {
+  const clientId = req.headers.get("x-paypal-client-id")?.trim() ?? "";
+  const secret = req.headers.get("x-paypal-client-secret")?.trim() ?? "";
+  if (KEY_SHAPE.test(clientId) && KEY_SHAPE.test(secret)) return { clientId, secret };
+  return paypalConfigured() ? { clientId: process.env.PAYPAL_CLIENT_ID!, secret: process.env.PAYPAL_CLIENT_SECRET! } : null;
+}
+
+async function accessToken(creds: Creds): Promise<string> {
+  const basic = Buffer.from(`${creds.clientId}:${creds.secret}`).toString("base64");
   const res = await fetch(`${BASE}/v1/oauth2/token`, {
     method: "POST",
     headers: { authorization: `Basic ${basic}`, "content-type": "application/x-www-form-urlencoded" },
@@ -34,9 +53,9 @@ export interface CreatedOrder {
   mode: "sandbox" | "simulated";
 }
 
-export async function createOrder(args: { mandateId: string; mandateName: string; items: LineItem[]; totalCents: number; requestId: string }): Promise<CreatedOrder> {
-  if (!paypalConfigured()) return { orderId: `SIM-${args.requestId.slice(-10).toUpperCase()}`, mode: "simulated" };
-  const token = await accessToken();
+export async function createOrder(args: { mandateId: string; mandateName: string; items: LineItem[]; totalCents: number; requestId: string }, creds: Creds | null = null): Promise<CreatedOrder> {
+  if (!creds) return { orderId: `SIM-${args.requestId.slice(-10).toUpperCase()}`, mode: "simulated" };
+  const token = await accessToken(creds);
   const res = await fetch(`${BASE}/v2/checkout/orders`, {
     method: "POST",
     headers: {
@@ -78,10 +97,10 @@ export interface Captured {
   mode: "sandbox" | "simulated";
 }
 
-export async function captureOrder(orderId: string): Promise<Captured> {
+export async function captureOrder(orderId: string, creds: Creds | null = null): Promise<Captured> {
   if (orderId.startsWith("SIM-")) return { status: "paid", captureId: `SIMCAP-${orderId.slice(4)}`, mode: "simulated" };
-  if (!paypalConfigured()) throw new PayPalError("PayPal is not configured.", 400);
-  const token = await accessToken();
+  if (!creds) throw new PayPalError("PayPal is not configured.", 400);
+  const token = await accessToken(creds);
   const res = await fetch(`${BASE}/v2/checkout/orders/${encodeURIComponent(orderId)}/capture`, {
     method: "POST",
     headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },

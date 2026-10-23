@@ -1,6 +1,6 @@
 import { newId } from "@/lib/agent";
 import { evaluate, proposalTotal } from "@/lib/policy";
-import { createOrder, PayPalError } from "@/lib/paypal";
+import { createOrder, credsFromRequest, PayPalError } from "@/lib/paypal";
 import { parseLedger, parseMandate, parseProposal } from "@/lib/validate";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
       items: proposal.items,
       totalCents: proposalTotal(proposal),
       requestId: newId("req"),
-    });
+    }, credsFromRequest(req));
     return Response.json({ ...order, verdict, totalCents: proposalTotal(proposal) });
   } catch (e) {
     const status = e instanceof PayPalError ? e.status : 502;

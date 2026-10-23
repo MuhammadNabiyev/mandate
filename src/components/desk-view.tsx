@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useConfig } from "@/lib/config-client";
 import { PERIOD_LABEL, usd } from "@/lib/format";
+import { useSandboxKeys } from "@/lib/paypal-keys";
 import { remainingBudget } from "@/lib/policy";
 import { sampleState } from "@/lib/sample";
 import { commit, patchEntry, recordEntry, useApp } from "@/lib/store";
@@ -11,6 +12,7 @@ import type { Mandate, Proposal, Verdict } from "@/lib/types";
 import { VerdictStamp } from "./brand";
 import { Envelope } from "./envelope";
 import { PayButton, type PaidInfo } from "./pay-button";
+import { SandboxKeysPanel } from "./sandbox-keys-panel";
 
 const EXAMPLES = ["a desk lamp under $40", "two packs of printer paper", "a bottle of single malt whisky", "a laptop"];
 
@@ -24,6 +26,8 @@ interface Outcome {
 export function DeskView() {
   const { mandates, ledger } = useApp();
   const cfg = useConfig();
+  const mine = useSandboxKeys();
+  const clientId = mine?.clientId ?? cfg?.paypalClientId ?? null;
   const now = new Date();
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [request, setRequest] = useState("");
@@ -77,7 +81,7 @@ export function DeskView() {
       if (!res.ok) throw new Error(data.error ?? "The agent could not answer.");
       const proposal = data.proposal as Proposal;
       const verdict = data.verdict as Verdict;
-      const entry = recordEntry({ mandate, proposal, verdict, status: verdict.decision === "deny" ? "denied" : "awaiting", mode: cfg?.paypalClientId ? "sandbox" : "simulated" });
+      const entry = recordEntry({ mandate, proposal, verdict, status: verdict.decision === "deny" ? "denied" : "awaiting", mode: clientId ? "sandbox" : "simulated" });
       setOutcome({ proposal, verdict, entryId: entry.id, note: data.note });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
@@ -244,7 +248,7 @@ export function DeskView() {
                 )}
                 {canPay && (
                   <div>
-                    <PayButton mandate={mandate} proposal={outcome.proposal} approved={approved} paypalClientId={cfg?.paypalClientId ?? null} onPaid={onPaid} onProblem={setError} />
+                    <PayButton mandate={mandate} proposal={outcome.proposal} approved={approved} paypalClientId={clientId} onPaid={onPaid} onProblem={setError} />
                     <button type="button" className="btn btn-quiet mt-3" onClick={cancel}>
                       Cancel
                     </button>
@@ -271,6 +275,7 @@ export function DeskView() {
           )}
 
           {!outcome && !error && !busy && <p className="text-ink-soft">Try the whisky: it is a perfectly good request that this mandate will refuse.</p>}
+          <SandboxKeysPanel serverHasKeys={Boolean(cfg?.paypalClientId)} />
         </div>
       </section>
     </div>

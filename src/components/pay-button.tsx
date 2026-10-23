@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { keyHeaders } from "@/lib/paypal-keys";
 import { getState } from "@/lib/store";
 import type { Mandate, Proposal } from "@/lib/types";
 
@@ -34,7 +35,7 @@ interface Props {
 }
 
 async function post<T>(url: string, body: unknown): Promise<T> {
-  const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json", ...keyHeaders() }, body: JSON.stringify(body) });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(typeof data.error === "string" ? data.error : "Something went wrong.");
   return data as T;
@@ -51,19 +52,26 @@ const createOrder = (p: Props) =>
 const SDK_ID = "paypal-sdk";
 
 function loadSdk(clientId: string): Promise<void> {
-  if (window.paypal) return Promise.resolve();
+  const existing = document.getElementById(SDK_ID) as HTMLScriptElement | null;
+  if (existing && existing.dataset.clientId !== clientId) {
+    existing.remove();
+    delete window.paypal;
+  } else if (window.paypal) {
+    return Promise.resolve();
+  }
   return new Promise((resolve, reject) => {
-    const existing = document.getElementById(SDK_ID);
-    if (existing) {
-      existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("The PayPal button could not load.")));
+    const pending = document.getElementById(SDK_ID);
+    if (pending) {
+      pending.addEventListener("load", () => resolve());
+      pending.addEventListener("error", () => reject(new Error("The PayPal button could not load.")));
       return;
     }
     const s = document.createElement("script");
     s.id = SDK_ID;
+    s.dataset.clientId = clientId;
     s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD&intent=capture&disable-funding=card,credit,paylater`;
     s.onload = () => resolve();
-    s.onerror = () => reject(new Error("The PayPal button could not load."));
+    s.onerror = () => reject(new Error("The PayPal button could not load. Check that the Client ID belongs to a sandbox app."));
     document.head.appendChild(s);
   });
 }

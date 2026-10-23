@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { draftMandateOffline, draftToMandate, sanitizeDraft } from "./ai";
-import { captureOrder, createOrder } from "./paypal";
+import { captureOrder, createOrder, credsFromRequest } from "./paypal";
 import { parseLedger, parseMandate, parseProposal } from "./validate";
 
 describe("draftMandateOffline", () => {
@@ -85,5 +85,25 @@ describe("paypal simulator", () => {
     const cap = await captureOrder(order.orderId);
     expect(cap.status).toBe("paid");
     expect(cap.captureId).toMatch(/^SIMCAP-/);
+  });
+});
+
+describe("bring-your-own sandbox keys", () => {
+  const req = (h: Record<string, string>) => new Request("http://x", { headers: h });
+  const id = "A".repeat(30);
+  const secret = "b".repeat(30);
+
+  it("uses the visitor's keys when both headers look like PayPal keys", () => {
+    expect(credsFromRequest(req({ "x-paypal-client-id": id, "x-paypal-client-secret": secret }))).toEqual({ clientId: id, secret });
+  });
+
+  it("ignores malformed keys and falls back to the simulator without server keys", () => {
+    expect(credsFromRequest(req({ "x-paypal-client-id": "short", "x-paypal-client-secret": secret }))).toBeNull();
+    expect(credsFromRequest(req({ "x-paypal-client-id": id, "x-paypal-client-secret": "has spaces and !" + secret }))).toBeNull();
+    expect(credsFromRequest(req({}))).toBeNull();
+  });
+
+  it("refuses to capture a real order without credentials", async () => {
+    await expect(captureOrder("5O190127TN364715T", null)).rejects.toThrow(/not configured/);
   });
 });

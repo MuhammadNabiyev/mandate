@@ -95,7 +95,7 @@ await page.waitForURL("**/desk");
 await hold(3500);
 
 await say("pens");
-await ask("a pack of gel pens");
+await ask("I need pens for taking notes");
 await hold(4500);
 
 await say("pay");
@@ -103,7 +103,7 @@ await click('[data-testid="pay-simulated"]');
 await hold(5000);
 
 await say("lamp");
-await ask("a desk lamp under $40");
+await ask("something to light my desk in the evening");
 await hold(4500);
 
 await say("approve");
@@ -113,7 +113,7 @@ await click('[data-testid="pay-simulated"]');
 await hold(4000);
 
 await say("whisky");
-await ask("a bottle of single malt whisky");
+await ask("a nice bottle of whisky as a gift");
 await hold(6500);
 
 await say("sandbox");

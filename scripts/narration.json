@@ -1,16 +1,72 @@
 [
-  { "id": "intro", "caption": "AI agents can shop now. Handing one your card is the scary part.", "say": "AI agents can shop now. But handing one your credit card is the scary part." },
-  { "id": "hero", "caption": "Mandate gives the agent a budget. The model proposes. Plain code decides.", "say": "Mandate gives the agent a budget instead. The AI proposes. Plain code decides." },
-  { "id": "try", "caption": "A mandate is an envelope: limits, categories, expiry.", "say": "A mandate is like a sealed envelope: limits, categories, and an expiry date." },
-  { "id": "pens", "caption": "Gel pens are inside the mandate: cleared.", "say": "The agent asks for gel pens. That is inside the mandate, so it is cleared." },
-  { "id": "pay", "caption": "Cleared purchases become a PayPal Orders v2 order. (Simulated here; real sandbox with your own keys.)", "say": "Cleared purchases become a PayPal Orders v2 order. Here it is simulated, and with your own sandbox keys it runs on the real PayPal sandbox." },
-  { "id": "lamp", "caption": "Above the ask-me-first threshold: held for the owner.", "say": "A desk lamp is above the ask me first threshold, so it is held for the owner." },
-  { "id": "approve", "caption": "Owner approves, then PayPal pays.", "say": "The owner approves, and PayPal pays." },
-  { "id": "whisky", "caption": "Wrong category and over the limit: refused, with every rule and the numbers.", "say": "A bottle of whisky is the wrong category, and over the limit. Refused, with every rule and the exact numbers." },
-  { "id": "sandbox", "caption": "Plug in your own PayPal sandbox keys. They stay in this tab only.", "say": "Want the real thing? Plug in your own PayPal sandbox keys. They stay in your browser tab only." },
-  { "id": "ledger", "caption": "Every request, decision and PayPal order id lands in the ledger.", "say": "Every request, decision, and PayPal order lands in the ledger." },
-  { "id": "mandates", "caption": "Write a mandate in plain English and the form fills itself in.", "say": "Write a mandate in plain English, and the form fills itself in." },
-  { "id": "revoke", "caption": "Revoke an envelope and the agent has no spending power. Instantly.", "say": "Revoke an envelope, and the agent has no spending power. Instantly." },
-  { "id": "security", "caption": "The server re-prices every cart and re-checks the mandate before any PayPal order.", "say": "The server re-prices every cart, and re-checks the mandate, before it creates any PayPal order." },
-  { "id": "outro", "caption": "Mandate: give your AI agent a budget, not your card.", "say": "Mandate. Give your AI agent a budget, not your card." }
+  {
+    "id": "intro",
+    "caption": "AI agents can shop now. Handing one your card is the scary part.",
+    "say": "AI agents can shop now. But handing one your credit card is the scary part."
+  },
+  {
+    "id": "hero",
+    "caption": "Mandate gives the agent a budget. The model proposes. Plain code decides.",
+    "say": "Mandate gives the agent a budget instead. The AI proposes. Plain code decides."
+  },
+  {
+    "id": "try",
+    "caption": "A mandate is an envelope: limits, categories, expiry.",
+    "say": "A mandate is like a sealed envelope: limits, categories, and an expiry date."
+  },
+  {
+    "id": "pens",
+    "caption": "The AI agent reads a plain request and picks real products. Pens: cleared.",
+    "say": "The agent is an AI model. It reads a plain request, and picks real products from the catalog. Pens are inside the mandate, so it is cleared."
+  },
+  {
+    "id": "pay",
+    "caption": "Cleared purchases become a PayPal Orders v2 order. (Simulated here; real sandbox with your own keys.)",
+    "say": "Cleared purchases become a PayPal Orders v2 order. This demo runs a simulator, and with your own sandbox keys it runs on the real PayPal sandbox."
+  },
+  {
+    "id": "lamp",
+    "caption": "Above the ask-me-first threshold: held for the owner.",
+    "say": "Something to light the desk is a lamp, above the ask me first threshold, so it is held for the owner."
+  },
+  {
+    "id": "approve",
+    "caption": "Owner approves, then PayPal pays.",
+    "say": "The owner approves, and PayPal pays."
+  },
+  {
+    "id": "whisky",
+    "caption": "Wrong category and over the limit: refused, with every rule and the numbers.",
+    "say": "A nice bottle of whisky is the wrong category, and over the limit. Refused, with every rule and the exact numbers."
+  },
+  {
+    "id": "sandbox",
+    "caption": "Plug in your own PayPal sandbox keys. They stay in this tab only.",
+    "say": "Want the real thing? Plug in your own PayPal sandbox keys. They stay in your browser tab only."
+  },
+  {
+    "id": "ledger",
+    "caption": "Every request, decision and PayPal order id lands in the ledger.",
+    "say": "Every request, decision, and PayPal order lands in the ledger."
+  },
+  {
+    "id": "mandates",
+    "caption": "Write a mandate in plain English and the form fills itself in.",
+    "say": "Write a mandate in plain English, and the form fills itself in."
+  },
+  {
+    "id": "revoke",
+    "caption": "Revoke an envelope and the agent has no spending power. Instantly.",
+    "say": "Revoke an envelope, and the agent has no spending power. Instantly."
+  },
+  {
+    "id": "security",
+    "caption": "The server re-prices every cart and re-checks the mandate before any PayPal order.",
+    "say": "The server re-prices every cart, and re-checks the mandate, before it creates any PayPal order."
+  },
+  {
+    "id": "outro",
+    "caption": "Mandate: give your AI agent a budget, not your card.",
+    "say": "Mandate. Give your AI agent a budget, not your card."
+  }
 ]
